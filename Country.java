@@ -61,15 +61,19 @@ public class Country {
         this.name = name;
     }
 
-    public void addNeighbor (String countryCode, int distBetweenCapitials) throws Exception {
-        for(Neighbor entry : neighbors){
-            if(entry.code.equalsIgnoreCase(countryCode)){
-                System.out.println("Duplicate entry. Abort insertion.");
-                return;
+    public void addNeighbor (String countryName, int distBetweenCapitials){
+        //  If neighbors not empty, check for duplicate values
+        if(!neighbors.isEmpty()){
+            for(Neighbor entry : neighbors){
+                assert entry.name != null;
+                if(entry.name.equalsIgnoreCase(countryName)){
+                    System.out.println("Duplicate entry. Abort insertion.");
+                    return;
+                }
             }
         }
 
-        Neighbor newAddition = new Neighbor(countryCode, distBetweenCapitials);
+        Neighbor newAddition = new Neighbor(countryName, distBetweenCapitials);
 
         //  Check for proper instantiation before adding to list
         if(newAddition.distToCap != -1){
@@ -87,24 +91,25 @@ public class Country {
          *  Private Properties  *
          ************************
          */
-        private final String code;
+        private final String name;
         private final Country link;
         private final int distToCap;
 
         /**
          *  Creates a new Neighbor object if the country has already been logged
-         * @param countryCode Name of Neighbor to create
+         * @param countryName Name of Neighbor to create
          * @param distToCaP Distance in KM from Capital to Capital
          */
-        Neighbor (String countryCode, int distToCaP) throws Exception {
-            if(CountryMap.getInstance().countryCodes.containsKey(countryCode)) {
-                code = countryCode;
+        Neighbor (String countryName, int distToCaP){
+            //  Neighbor must have a Country object to establish the link.
+            if(Countries.getInstance().findCountry(countryName.toLowerCase()) != null) {
+                name = countryName;
                 distToCap = distToCaP;
-                link = CountryMap.getInstance().findCountry(code);
+                link = Countries.getInstance().findCountry(name);
             }
             else{
                 //  Set all to error values
-                code = null;
+                name = null;
                 link = null;
                 distToCap = -1;
 
@@ -117,8 +122,8 @@ public class Country {
          ***************************
          */
 
-        public String getCode () {
-            return code;
+        public String getName () {
+            return name;
         }
 
         public Country getLink () {
@@ -130,3 +135,5 @@ public class Country {
         }
     }
 }
+
+
