@@ -1,5 +1,4 @@
 import java.io.*;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.*;
@@ -13,10 +12,10 @@ public class IRoadTrip {
     private static final Dictionary<String, String> knownFiles = new Hashtable<>() {{
         put("borders", "borders.txt");
         put("capDist", "capdist.csv");
-        put("stateNames", "state_names.tsv");
+        put("stateNames", "state_name.tsv");
     }};
 
-    public IRoadTrip (String [] args) {
+    public IRoadTrip (String [] args) throws IOException {
         boolean hasBFile = false;
         boolean hasCFile = false;
         boolean hasSFile = false;
@@ -48,55 +47,72 @@ public class IRoadTrip {
          *      a)  Read Borders file to get all border pairings
          *      b)  Read Cap Dist file to get all cap dist measurements
          *      c)  Populate each country's neighbors using info from steps 'a' and 'b'
-         *  3)  Accept user input
          */
+
+        readStateNames(knownFiles.get("stateNames"));
+
+        setBorders(readBorders(knownFiles.get("borders")), readCapDistance(knownFiles.get("capDist")));
     }
 
     public int getDistance (String country1, String country2) {
-        // Replace with your code
-        return -1;
+        Country orig = map.findCountry(country1.toLowerCase());
+        return orig.getNeighborDist(country2);
     }
 
     public List<String> findPath (String country1, String country2) {
-        List<List<String>> onePath;
-        Dictionary<Integer, List<List<String>>> allPaths = new Hashtable<>();
+        PathFinder pf = new PathFinder();
 
+        return pf.dijkstra(country1, country2);
     }
 
 
-    public void acceptUserInput() throws IOException {
-        String start = "", end = "";
-        int tries = 0;
+    public void acceptUserInput() throws IOException, InterruptedException {
+        while(true){
+            String start = "", end = "";
+            int tries = 0;
 
-        //  Ensure both start and end are valid countries
-        while(map.findCountry(start.toLowerCase()) == null){
-            Runtime.getRuntime().exec("cls");
-            if(tries++ > 1){
-                System.out.println(start + " is not a valid country. Try Again.");
+            //  Ensure both start and end are valid countries
+            while(map.findCountry(start) == null){
+                //noinspection deprecation
+                Runtime.getRuntime().exec("clear");
+                if(tries++ > 1){
+                    System.out.println(start + " is not a valid country. Try Again.");
+                }
+
+                System.out.print("Enter the name of the first country (type EXIT to quit): ");
+                start = scan.nextLine();
+                if(start.matches("EXIT")){
+                    return;
+                }
             }
 
-            System.out.print("Please enter a starting Country: ");
-            start = scan.nextLine();
-        }
+            tries = 0;
 
-        tries = 0;
-
-        while(map.findCountry(end.toLowerCase()) ==  null){
-            Runtime.getRuntime().exec("cls");
-            if(tries++ > 1){
-                System.out.println(end + " is not a valid country. Try Again.");
+            while(map.findCountry(end) ==  null){
+                if(tries++ > 1){
+                    System.out.println(end + " is not a valid country. Try Again.");
+                }
+                System.out.print("Enter the name of the second country (type EXIT to quit): ");
+                end = scan.nextLine();
+                if(start.matches("EXIT")){
+                    return;
+                }
             }
-            System.out.println("Starting country: " + start);
-            System.out.print("Now, enter a destination country: ");
-            end = scan.nextLine();
+
+            System.out.println("Excellent. Calculating the best path. Please Wait...");
+
+            List<String> shortestPath = findPath(start, end);
+
+            System.out.println("Route from " + start + " to " + end + ":");
+            for (int i = 1; i < shortestPath.size(); i++) {
+                int dist = getDistance(shortestPath.get(i - 1), shortestPath.get(i));
+
+                System.out.println("* " + shortestPath.get(i - 1)+ " --> " + shortestPath.get(i) + " (" + dist + " km.)");
+            }
+            Thread.sleep(500);
         }
-
-        System.out.println("Excellent. Calculating the best path from: '" + start + "' to: '" + end + "' ...");
-
     }
-
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException {
         IRoadTrip a3 = new IRoadTrip(args);
 
         a3.acceptUserInput();
@@ -144,32 +160,43 @@ public class IRoadTrip {
      * @return A full list of all pairings
      * @throws RuntimeException
      */
-    public List<Dictionary<String, String>> readBorders(String filename) throws RuntimeException {
+    public List<Dictionary<String, List<String>>> readBorders(String filename) throws RuntimeException {
 
-        List<Dictionary<String, String>> allBorderPairings = new ArrayList<>();
+        List<Dictionary<String, List<String>>> allBorderPairings = new ArrayList<>();
 
         try{
             reader = new BufferedReader(new FileReader(filename));
 
             String line = reader.readLine();
+            int i = 0;
             while(line != null){
 
-                Dictionary<String, String> entry = new Hashtable<>();
+                Dictionary<String, List<String>> entry = new Hashtable<>();
 
                 String [] borderInfo = line.split(" = ");
 
-                String origCountry = borderInfo[0];
-                String [] borders = borderInfo[1].split("; ");
 
-                for(String country : borders){
-                    String countryName = country.split(" ")[0];
+                //  No bordering countries? Skip adding to the list
+                if(borderInfo.length > 1){
+                    String [] borders = borderInfo[1].split("; ");
+                    String origCountry = borderInfo[0];
+                    List<String> orig = new ArrayList<>(){{ add(origCountry); }};
+                    List<String> borderList = new ArrayList<>();
 
-                    entry.put("origin", origCountry);
-                    entry.put("dest", countryName);
+                    for(String country : borders){
+                        String countryName = country.split(" ")[0];
+
+                        borderList.add(countryName);
+                    }
+
+                    if(orig.get(0).equalsIgnoreCase("United States")){
+                        System.out.println(" ");
+                    }
+                    entry.put("origin", orig);
+                    entry.put("borders", borderList);
 
                     allBorderPairings.add(entry);
                 }
-
                 line = reader.readLine();
             }
             reader.close();
@@ -200,7 +227,9 @@ public class IRoadTrip {
                 Dictionary<String, String> pairings = new Hashtable<>();
 
                 String [] info = line.split(",");
-
+                if(info[1].matches("UKG")){
+                    info[1] = "UK";
+                }
                 pairings.put("origin", info[1]);
                 pairings.put("dest", info[3]);
                 pairings.put("distance", info[4]);
@@ -237,26 +266,45 @@ public class IRoadTrip {
      * @param borderPairs List of all pairings between bordering countries
      * @param capDistInfo List of distances between nation capitals
      */
-    public void setBorders(List<Dictionary<String, String>> borderPairs, List<Dictionary<String, String>> capDistInfo) {
+    public void setBorders(List<Dictionary<String, List<String>>> borderPairs, List<Dictionary<String, String>> capDistInfo) {
         Countries map = Countries.getInstance();
         Dictionary<String, String> distInfo;
 
-        for(Dictionary<String, String> pair : borderPairs){
-            String origin = pair.get("origin");
-            String dest = pair.get("dest");
+        for(Dictionary<String, List<String>> pair : borderPairs){
+            String origin = pair.get("origin").get(0);
+            List<String> borders = pair.get("borders");
 
+            //  Edge cases due to inconsistent naming conventions
+            if(origin.contains("United States")){
+                origin = "United States of America";
+            }
+            if(origin.contains("Germany")){
+                origin = "German Federal Republic";
+            }
             Country start = map.findCountry(origin);
-            Country end = map.findCountry(dest);
 
-            //  Retrieve info from capDistInfo list
-            distInfo = biSearchCapDist(capDistInfo, 0, capDistInfo.size() - 1, origin, dest);
+            //  Ensure skipping of non-existent countries
+            if(start != null) {
+                for (String border : borders) {
+                    if(border.equalsIgnoreCase("US")){
+                        border = "United States of America";
+                    }
+                    Country end = map.findCountry(border);
+                    if(end != null) {
+                        //  Retrieve info from capDistInfo list
+                        distInfo = biSearchCapDist(capDistInfo, 0, capDistInfo.size() - 1, start.getCode(), end.getCode());
 
-            //  Convert String dist to int
-            int distance = Integer.parseInt(distInfo.get("dist"));
+                        if(distInfo != null){
+                            //  Convert String dist to int
+                            int distance = Integer.parseInt(distInfo.get("distance"));
 
-            //  Add link to both countries, since borders work two ways
-            start.addNeighbor(dest, distance);
-            end.addNeighbor(origin, distance);
+                            //  Add link to both countries, since borders work two ways
+                            start.addNeighbor(border, distance);
+                            end.addNeighbor(origin, distance);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -280,6 +328,9 @@ public class IRoadTrip {
         int origMatch = entryOrigin.compareToIgnoreCase(origin);
         int destMatch = entryDest.compareToIgnoreCase(dest);
 
+        if(right - left < 0){
+            return null;
+        }
         //  Matching Dictionary found, return entry
         if(origMatch == 0 && destMatch == 0){
             return entry;

@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -20,21 +21,12 @@ public class Country {
      *  Utility Functions  *
      ***********************
      */
+    Country(){
+        neighbors = new ArrayList<>();
+    }
 
     public String getCode () {
         return code;
-    }
-
-    public Date getEnd () {
-        return end;
-    }
-
-    public int getID () {
-        return ID;
-    }
-
-    public Date getStart () {
-        return start;
     }
 
     public List<Neighbor> getNeighbors () {
@@ -61,13 +53,16 @@ public class Country {
         this.name = name;
     }
 
+    public void setStart (Date start) {
+        this.start = start;
+    }
+
     public void addNeighbor (String countryName, int distBetweenCapitials){
         //  If neighbors not empty, check for duplicate values
         if(!neighbors.isEmpty()){
             for(Neighbor entry : neighbors){
                 assert entry.name != null;
                 if(entry.name.equalsIgnoreCase(countryName)){
-                    System.out.println("Duplicate entry. Abort insertion.");
                     return;
                 }
             }
@@ -81,8 +76,25 @@ public class Country {
         }
     }
 
-    public void setStart (Date start) {
-        this.start = start;
+    public int getNeighborDist(String countryName){
+        int dist = Integer.MAX_VALUE;
+        for(Neighbor elem : neighbors){
+            assert elem.name != null;
+            if(elem.name.equalsIgnoreCase(countryName)){
+                dist = elem.distToCap;
+            }
+        }
+        return dist;
+    }
+    public void printCountry(){
+        System.out.printf(
+                """
+                    {
+                    \tName:\t%s
+                    \tCode:\t%s
+                    \tID:\t%d
+                    }
+                """, this.name, this.code, this.ID);
     }
 
     protected static class Neighbor{
@@ -102,7 +114,7 @@ public class Country {
          */
         Neighbor (String countryName, int distToCaP){
             //  Neighbor must have a Country object to establish the link.
-            if(Countries.getInstance().findCountry(countryName.toLowerCase()) != null) {
+            if(Countries.getInstance().findCountry(countryName) != null) {
                 name = countryName;
                 distToCap = distToCaP;
                 link = Countries.getInstance().findCountry(name);

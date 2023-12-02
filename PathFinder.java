@@ -1,4 +1,3 @@
-import javax.sound.midi.Soundbank;
 import java.util.*;
 
 /**
@@ -6,57 +5,78 @@ import java.util.*;
  *  to find the best (shortest) path.
  */
 public class PathFinder {
-    private Dictionary<String, Integer> dist;
-    private PriorityQueue<Node> pq;
-    private List<List<Node>> adj;
-    private static final Countries map = Countries.getInstance();
-
-    public PathFinder(int numVertices){
-        dist = new Hashtable<>();
-        pq = new PriorityQueue<>();
+    PriorityQueue<Node> nodes;
+    Set<String> visited;
+    Dictionary<String, Integer> distance;
+    Dictionary<String, String> parent;
+    List<String> jumps;
+    final Countries map = Countries.getInstance();
+    PathFinder(){
+        nodes = new PriorityQueue<>();
+        visited = new HashSet<>();
+        distance = new Hashtable<>();
+        parent = new Hashtable<>();
+        jumps = new ArrayList<>();
     }
 
-    public void dijkstra(List<List<Node>> adj, String src){
-        //  Use keys from main program, set all values to Infinity
-        for(String c : map.countries.keySet()){
-            dist.put(c, Integer.MAX_VALUE);
+    List<String> dijkstra(String start, String end){
+        nodes.add(new Node(start, 0));
+        for(Country temp : map.countries.values()){
+            distance.put(temp.getName(), Integer.MAX_VALUE);
         }
-        dist.put(src, 0);
+        distance.put(start, 0);
 
-        pq.add(new Node(src, 0));
+        while(!nodes.isEmpty()) {
+            Node curr = nodes.remove();
 
-        while(!pq.isEmpty()){
-            Node V = pq.remove();
+            visited.add(curr.name);
 
-            List<Country.Neighbor> neighbors = map.countries.get(V.name).getNeighbors();
-
-            for(Country.Neighbor neighbor : neighbors){
-                int newDist = dist.get(V) + neighbor.getDistToCap();
-
-                if(newDist < dist.get(neighbor)){
-                    dist.put(neighbor.getName(), newDist);
-                    pq.add(new Node(neighbor.getName(), newDist));
-                }
+            //  Path found
+            if (curr.name.equalsIgnoreCase(end)) {
+                break;
             }
 
+            List<Country.Neighbor> neighborList = map.findCountry(curr.name.toLowerCase()).getNeighbors();
+
+            for (Country.Neighbor neighbor : neighborList) {
+                if (!visited.contains(neighbor.getName())) {
+                    int totalDist = distance.get(curr.name) + neighbor.getDistToCap();
+
+                    if (totalDist < distance.get(neighbor.getName())) {
+                        String jump = "*\t" + curr.name + " --> " + neighbor.getName() + " (" + neighbor.getDistToCap() + " km.)";
+                        distance.put(neighbor.getName(), totalDist);
+                        parent.put(neighbor.getName(), curr.name);
+                        nodes.add(new Node(neighbor.getName(), totalDist));
+                    }
+                }
+            }
         }
-        System.out.println(dist);
+        List<String> bestPath = new ArrayList<>();
+        String current = end;
+
+        while(current != null){
+            bestPath.add(0, current);
+            current = parent.get(current);
+        }
+        return bestPath;
     }
 
-    static class Node implements Comparator<Node>{
-        public String name;
-        public int dist;
+    private static class Node implements Comparable<Node>{
+        int distFromSource;
+        String name;
 
-        public Node(){
+        Node(String source, int distFromSource) {
+            name = source;
+            this.distFromSource = distFromSource;
         }
-        public Node(String origin, int dist){
-            //  Store lowercase to use as key for dictionary
-            this.name = origin.toLowerCase();
-            this.dist = dist;
-        }
+
         @Override
-        public int compare (Node o1, Node o2) {
-            return Integer.compare(o1.dist, o2.dist);
+        public int compareTo (Node o) {
+            int compOutcome = Integer.compare(this.distFromSource, o.distFromSource);
+            if(compOutcome == 1 || compOutcome == -1){
+                return compOutcome;
+            }
+            return 0;
         }
     }
 }

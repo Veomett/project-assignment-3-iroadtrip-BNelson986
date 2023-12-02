@@ -1,7 +1,6 @@
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  *  Class uses the "Lazy Initialization" to apply the Singleton Pattern
@@ -10,28 +9,7 @@ import java.util.LinkedHashMap;
 public class Countries {
     private static volatile Countries instance = null;
     public final LinkedHashMap<String, Country> countries = new LinkedHashMap<>();
-    /*
-     **************************
-     *  Utils for countries  *
-     **************************
-     */
-
-    /**
-     *  Creates a new entry in "countries" hashtable
-     * @param countryName Full name of the country
-     * @param countryCode 3-Letter code of the country
-     */
-    public void addCountry(String countryName, String countryCode){
-        String key = countryName.toLowerCase();
-        if(countries.containsKey(key)){
-            return;
-        }
-        Country newAddition = new Country();
-        newAddition.setName(countryName);
-        newAddition.setCode(countryCode);
-
-        countries.put(key, newAddition);
-    }
+    public final HashMap<String, String> countryCodes = new HashMap<>();
 
     /**
      *  Parses countryData (csv formatted), creates a new
@@ -47,22 +25,24 @@ public class Countries {
      *                    in exactly the format as above.
      */
     public void addCountryInfo(String countryData) throws ParseException {
-        String [] data = countryData.split(",");
+        String [] data = countryData.split("\t");
 
-        SimpleDateFormat sdf = new SimpleDateFormat();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Country info;
 
         int ID = Integer.parseInt(data[0]);
         String code = data[1];
-        String name = data[2];
+        String name = data[2].split(" \\(")[0].split("/")[0];
         Date start = sdf.parse(data[3]);
         Date end = sdf.parse(data[4]);
 
-        //  Key is always lowercase country name
         String key = name.toLowerCase();
-
-        if(!countries.containsKey(key)){
+        //  Key for countryCodes is name, value is the key for countries
+        if(!countryCodes.containsKey(key)){
+            countryCodes.put(key, code);
+        }
+        if(!countries.containsKey(countryCodes.get(key))){
             info = new Country();
 
             info.setID(ID);
@@ -71,7 +51,7 @@ public class Countries {
             info.setStart(start);
             info.setEnd(end);
 
-            countries.put(key, info);
+            countries.put(code, info);
         }
         else{
             info = countries.get(key);
@@ -90,8 +70,9 @@ public class Countries {
      * @return Data from entry mapped to countryName or null
      */
     public Country findCountry(String countryName) {
-        if(countries.containsKey(countryName.toLowerCase())){
-            return countries.get(countryName.toLowerCase());
+        String key = countryCodes.get(countryName.toLowerCase());
+        if(countries.containsKey(key)){
+            return countries.get(key);
         }
         return null;
     }
