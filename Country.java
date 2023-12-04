@@ -1,9 +1,13 @@
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 
+/**
+ * Individual Country object. Keeps track of all neighboring
+ * countries and the distance between the capitals.
+ */
 public class Country {
+    private final List<Neighbor> neighbors;
     /*
      ************************
      *  Private Properties  *
@@ -11,22 +15,23 @@ public class Country {
      */
     private String name;
     private String code;
-    private Date start;
-    private Date end;
     private int ID;
-    private List<Neighbor> neighbors;
 
     /*
      ***********************
      *  Utility Functions  *
      ***********************
      */
-    Country(){
+    public Country () {
         neighbors = new ArrayList<>();
     }
 
     public String getCode () {
         return code;
+    }
+
+    public void setCode (String code) {
+        this.code = code;
     }
 
     public List<Neighbor> getNeighbors () {
@@ -37,97 +42,89 @@ public class Country {
         return name;
     }
 
-    public void setCode (String code) {
-        this.code = code;
-    }
-
-    public void setEnd (Date end) {
-        this.end = end;
+    public void setName (String name) {
+        this.name = name;
     }
 
     public void setID (int ID) {
         this.ID = ID;
     }
 
-    public void setName (String name) {
-        this.name = name;
-    }
-
-    public void setStart (Date start) {
-        this.start = start;
-    }
-
-    public void addNeighbor (String countryName, int distBetweenCapitials){
+    /**
+     *  Adds a new neighbor to the country. Will not add any duplicate entries
+     * @param countryName Name of neighboring country
+     * @param distBetweenCapitals Distance in km between capitals
+     */
+    public void addNeighbor (String countryName, int distBetweenCapitals) {
         //  If neighbors not empty, check for duplicate values
-        if(!neighbors.isEmpty()){
-            for(Neighbor entry : neighbors){
+        if (!neighbors.isEmpty()) {
+            for (Neighbor entry : neighbors) {
                 assert entry.name != null;
-                if(entry.name.equalsIgnoreCase(countryName)){
+                if (entry.name.equalsIgnoreCase(countryName)) {
                     return;
                 }
             }
         }
 
-        Neighbor newAddition = new Neighbor(countryName, distBetweenCapitials);
+        Neighbor newAddition = new Neighbor(countryName, distBetweenCapitals);
 
         //  Check for proper instantiation before adding to list
-        if(newAddition.distToCap != -1){
+        if (newAddition.distToCap != -1) {
             neighbors.add(newAddition);
         }
     }
 
-    public int getNeighborDist(String countryName){
+    /**
+     *  Searches neighbor list and returns the distance in km to reach the next country
+     * @param countryName Name of country to move to
+     * @return Distance in km to travel to countryName
+     */
+    public int getNeighborDist (String countryName) {
         int dist = Integer.MAX_VALUE;
-        for(Neighbor elem : neighbors){
+        for (Neighbor elem : neighbors) {
             assert elem.name != null;
-            if(elem.name.equalsIgnoreCase(countryName)){
+            if (elem.name.equalsIgnoreCase(countryName)) {
                 dist = elem.distToCap;
             }
         }
         return dist;
     }
-    public void printCountry(){
-        System.out.printf(
-                """
-                    {
-                    \tName:\t%s
-                    \tCode:\t%s
-                    \tID:\t%d
-                    }
-                """, this.name, this.code, this.ID);
-    }
 
-    protected static class Neighbor{
+
+    /**
+     *  Object to store information about distance to a neighboring country.
+     *  Includes a pointer to that country's object.
+     */
+    protected static class Neighbor {
         /*
          ************************
          *  Private Properties  *
          ************************
          */
         private final String name;
-        private final Country link;
         private final int distToCap;
 
         /**
-         *  Creates a new Neighbor object if the country has already been logged
+         * Creates a new Neighbor object if the country has already been logged
+         *
          * @param countryName Name of Neighbor to create
-         * @param distToCaP Distance in KM from Capital to Capital
+         * @param distToCaP   Distance in KM from Capital to Capital
          */
-        Neighbor (String countryName, int distToCaP){
+        public Neighbor (String countryName, int distToCaP) {
             //  Neighbor must have a Country object to establish the link.
-            if(Countries.getInstance().findCountry(countryName) != null) {
+            if (Countries.getInstance().findCountry(countryName) != null) {
                 name = countryName;
                 distToCap = distToCaP;
-                link = Countries.getInstance().findCountry(name);
             }
-            else{
+            else {
                 //  Set all to error values
                 name = null;
-                link = null;
                 distToCap = -1;
 
                 System.out.println("Country not found in map. Please add before assigning neighbors.");
             }
         }
+
         /*
          ***************************
          *  Util Access Functions  *
@@ -136,10 +133,6 @@ public class Country {
 
         public String getName () {
             return name;
-        }
-
-        public Country getLink () {
-            return link;
         }
 
         public int getDistToCap () {

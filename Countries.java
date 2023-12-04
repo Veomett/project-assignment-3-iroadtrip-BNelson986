@@ -1,6 +1,6 @@
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  *  Class uses the "Lazy Initialization" to apply the Singleton Pattern
@@ -8,7 +8,7 @@ import java.util.*;
  */
 public class Countries {
     private static volatile Countries instance = null;
-    public final LinkedHashMap<String, Country> countries = new LinkedHashMap<>();
+    public final HashMap<String, Country> countries = new LinkedHashMap<>();
     public final HashMap<String, String> countryCodes = new HashMap<>();
 
     /**
@@ -19,23 +19,18 @@ public class Countries {
      *  1)  Country ID number
      *  2)  Country Code
      *  3)  Country Name
-     *  4)  Country Start Date
-     *  5)  Country End Date
+     *  4)  Extraneous info about start and end dates
      * @param countryData A CSV Formatted string of the values
      *                    in exactly the format as above.
      */
     public void addCountryInfo(String countryData) throws ParseException {
         String [] data = countryData.split("\t");
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         Country info;
 
         int ID = Integer.parseInt(data[0]);
         String code = data[1];
         String name = data[2].split(" \\(")[0].split("/")[0];
-        Date start = sdf.parse(data[3]);
-        Date end = sdf.parse(data[4]);
 
         String key = name.toLowerCase();
         //  Key for countryCodes is name, value is the key for countries
@@ -48,8 +43,6 @@ public class Countries {
             info.setID(ID);
             info.setCode(code);
             info.setName(name);
-            info.setStart(start);
-            info.setEnd(end);
 
             countries.put(code, info);
         }
@@ -59,8 +52,6 @@ public class Countries {
             info.setID(ID);
             info.setCode(code);
             info.setName(name);
-            info.setStart(start);
-            info.setEnd(end);
         }
     }
 
