@@ -1,7 +1,7 @@
 # CS 245 (Fall 2023) - Assignment 3 - IRoadTrip
 
 #   Program Description
-    <p style="text-align: justify">
+    <p style="justify">
     Determines the optimal route between two countries. Once route is determined, stores the path of every jump, 
     or edge, required to reach the specified destination. Presents the user with a print out of each jump with
     the following format:
