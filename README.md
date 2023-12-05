@@ -1,12 +1,15 @@
 # CS 245 (Fall 2023) - Assignment 3 - IRoadTrip
 
-#   Program Description
-    <div align="justify">
-    Determines the optimal route between two countries. Once route is determined, stores the path of every jump, 
-    or edge, required to reach the specified destination. Presents the user with a print out of each jump with
-    the following format:
+
+ 
+
+# Program Description
+
+    Determines the optimal route between two countries. Once route is determined, stores the path of every 
+    jump, or edge, required to reach the specified destination. Presents the user with a print out of each
+    jump with the following format:
     * ${country1} -> ${country2} (${distance from 1 to 2} km)
-    </div>
+
 #   Compiling and Running
 
 ###  Compiling
@@ -16,30 +19,33 @@
 
 ###  Run
     1) Run: java IRoadTrip ${fileNames} "Files are included in the repository for the names"
+
+
+
     
 
 #   Design Choices
 
 ###  Singleton Pattern
     
-    Used "Lazy Implementation" method for ease of implementation and is thread-safe. 
-    This allows the program to instantiate only one set of Dictionaries needed for execution.
+    Used "Lazy Implementation" method for ease of implementation and its thread-safe attributes. 
+    This allows the program to instantiate and share one Countries object needed for execution.
 
 ### Country Codes
     
-    Used to store the keys for the main "countries" dictionary. Takes country name and returns 
-    unique 3-Letter code that represents the country. This allows the user to input a country name
+    Used to store the keys for the main "countries" dictionary. Takes country name and returns unique 
+    3-Letter code that represents the country. This allows the user to input a country name
     instead of the countries' codes and reduces conflicting key/value pairs.
 
 ### Countries
 
-    Uses unique 3-Letter code, stored in countryCodes, as the key to access individual countries.
+    Uses unique 3-Letter code, stored in countryCodes, as the key to access individual countries. 
     Each entry contains a List of all neighboring countries and the distances between their capitals.
 
 ### Path Finder
     
-    Uses Dijkstra's Algorithm to calculate the shortest path between 2 countries. Used OpenAI's ChatGPT 3.5
-    to learn in psuedocode how to build a path saving algorithm.
+    Uses Dijkstra's Algorithm to calculate the shortest path between 2 countries. Used generative AI
+    to help layout psuedocode about how to build a path saving algorithm.
 
 #   UML Breakdown
 
